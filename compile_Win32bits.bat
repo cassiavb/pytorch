@@ -25,6 +25,9 @@ set BUILD_CAFFE2=OFF
 set INTERN_BUILD_ATEN_OPS=OFF
 set USE_FBGEMM=0
 set ATEN_AVX512_256=FALSE
+set USE_KINETO=0
+set ATEN_CPU_CAPABILITY=default
+:: set ATEN_THREADING=OMP also gives me AVX2 error
 
 :: Remove --cmake if you dont want cmake to run again
 python setup.py install --cmake  

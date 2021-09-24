@@ -27,6 +27,11 @@ SET(AVX512_CODE "
                                 0, 0, 0, 0, 0, 0, 0, 0);
     __m512i b = a;
     __mmask64 equality_mask = _mm512_cmp_epi8_mask(a, b, _MM_CMPINT_EQ);
+	
+	// Added to force AVX512 to not be detected and fix undeclared AVX2 error -- run into link error
+	//__m256i x;
+    //_mm256_extract_epi64(x, 0);
+	
     return 0;
   }
 ")

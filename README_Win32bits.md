@@ -43,20 +43,22 @@ cd pytorch
 
 ## Compile
 
-In that Anaconda (integration) environment run the batch script:  
+Following the instructions from here:  
+https://github.com/pytorch/pytorch/issues/38322  
+https://github.com/pytorch/pytorch#install-pytorch  
+
+I created a .bat script to compile Pytorch in Windows 32bits.
+
+In that Anaconda (integration) environment run that batch script:  
 ```
 ./compile_Win32bits.bat
 ```
 
-I created this script following the instructions from here:  
-https://github.com/pytorch/pytorch/issues/38322  
-https://github.com/pytorch/pytorch#install-pytorch  
-
-To clear up any cmake issues or weird behaviours in compilation delete the file build/CMakeCache.txt that is created after cmake is run.
+Note: to clear up any cmake issues or weird behaviours in compilation delete the file build/CMakeCache.txt that is created after cmake is run.
 
 ## Compilation errors
 
-I get the following compilation errors when running that script:
+I get the following errors when running that script:
 ```
 [3466/5031] Building CXX object caffe2\CMakeFiles\torch_cpu.dir\__\aten\src\ATen\native\DispatchStub.cpp.obj
 FAILED: caffe2/CMakeFiles/torch_cpu.dir/__/aten/src/ATen/native/DispatchStub.cpp.obj
@@ -85,7 +87,11 @@ https://github.com/pytorch/pytorch/issues/17901
 that was mentioned more recently here:  
 https://github.com/pytorch/pytorch/issues/40988  
 
-I tried modifying DispatchStub.cpp lines 125,126 to not use AVX2 flag when AVX512 exists but then I get the following link error later on:  
+According to this: https://github.com/pytorch/pytorch/issues/35678
+"Stuff that goes through DispatchStub.cpp can be controlled by runtime by ATEN_CPU_CAPABILITY environment variable.  For example, set ATEN_CPU_CAPABILITY=default to avoid the AVX and AVX2 code paths."
+but setting ATEN_CPU_CAPABILITY=default or to AVX it still gives me the 'AVX2': undeclared identifier error in DispatchStub.cpp 
+
+I modified DispatchStub.cpp lines 125,126 to not use AVX2 flag when AVX512 exists but then I get the following link error later on:  
 
 ```
 cmd.exe /C "cd . && "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=caffe2\CMakeFiles\TensorImpl_test.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\mt.exe --manifests  -- C:\PROGRA~2\MICROS~2\2019\BUILDT~1\VC\Tools\MSVC\1428~1.293\bin\Hostx86\x86\link.exe /nologo caffe2\CMakeFiles\TensorImpl_test.dir\__\aten\src\ATen\core\TensorImpl_test.cpp.obj  /out:bin\TensorImpl_test.exe /implib:lib\TensorImpl_test.lib /pdb:bin\TensorImpl_test.pdb /version:0.0 /machine:X86 /ignore:4049 /ignore:4217 /ignore:4099 /INCREMENTAL:NO /subsystem:console  lib\gtest_main.lib  lib\torch.lib  lib\torch_cpu.lib  lib\libprotobuf.lib  lib\c10.lib  lib\gtest.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
@@ -101,8 +107,27 @@ bin\TensorImpl_test.exe : fatal error LNK1120: 3 unresolved externals
 ninja: build stopped: subcommand failed.
 ```
 
-Next:  
-- Check C10_UNLIKELY test in DispatchStub.cpp  
-- Can/should you pass a AVX512 test and not pass a AVX2 test?  
-- Try running the snipets of the c functions in FindAVX.cmake using the cl tool on a Developer Command Tools 32bits/64bits  
-- Ask about this in the pytorch git issue section  
+The same link error happens if I try to 'trick' to not passing the AVX512 test.
+
+```
+[1166/1219] Linking CXX executable bin\TensorImpl_test.exe
+FAILED: bin/TensorImpl_test.exe
+cmd.exe /C "cd . && "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --intdir=caffe2\CMakeFiles\TensorImpl_test.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100183~1.0\x86\mt.exe --manifests  -- C:\PROGRA~2\MICROS~2\2019\BUILDT~1\VC\Tools\MSVC\1428~1.293\bin\Hostx86\x86\link.exe /nologo caffe2\CMakeFiles\TensorImpl_test.dir\__\aten\src\ATen\core\TensorImpl_test.cpp.obj  /out:bin\TensorImpl_test.exe /implib:lib\TensorImpl_test.lib /pdb:bin\TensorImpl_test.pdb /version:0.0 /machine:X86 /ignore:4049 /ignore:4217 /ignore:4099 /INCREMENTAL:NO /subsystem:console  lib\gtest_main.lib  lib\torch.lib  lib\torch_cpu.lib  lib\libprotobuf.lib  lib\c10.lib  lib\gtest.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+LINK: command "C:\PROGRA~2\MICROS~2\2019\BUILDT~1\VC\Tools\MSVC\1428~1.293\bin\Hostx86\x86\link.exe /nologo caffe2\CMakeFiles\TensorImpl_test.dir\__\aten\src\ATen\core\TensorImpl_test.cpp.obj /out:bin\TensorImpl_test.exe /implib:lib\TensorImpl_test.lib /pdb:bin\TensorImpl_test.pdb /version:0.0 /machine:X86 /ignore:4049 /ignore:4217 /ignore:4099 /INCREMENTAL:NO /subsystem:console lib\gtest_main.lib lib\torch.lib lib\torch_cpu.lib lib\libprotobuf.lib lib\c10.lib lib\gtest.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:bin\TensorImpl_test.exe.manifest" failed (exit code 1120) with the following output:
+   Creating library lib\TensorImpl_test.lib and object lib\TensorImpl_test.exp
+TensorImpl_test.cpp.obj : error LNK2019: unresolved external symbol "__declspec(dllimport) public: __thiscall caffe2::Tensor::Tensor(struct c10::Device)" (__imp_??0Tensor@caffe2@@QAE@UDevice@c10@@@Z) referenced in function "private: virtual void __thiscall TensorImplTest_Caffe2Constructor_Test::TestBody(void)" (?TestBody@TensorImplTest_Caffe2Constructor_Test@@EAEXXZ)
+TensorImpl_test.cpp.obj : error LNK2019: unresolved external symbol "__declspec(dllimport) public: class c10::ArrayRef<__int64> __thiscall caffe2::Tensor::strides(void)const " (__imp_?strides@Tensor@caffe2@@QBE?AV?$ArrayRef@_J@c10@@XZ) referenced in function "private: virtual void __thiscall TensorImplTest_Caffe2Constructor_Test::TestBody(void)" (?TestBody@TensorImplTest_Caffe2Constructor_Test@@EAEXXZ)
+TensorImpl_test.cpp.obj : error LNK2019: unresolved external symbol "__declspec(dllimport) public: __thiscall caffe2::Tensor::~Tensor(void)" (__imp_??1Tensor@caffe2@@QAE@XZ) referenced in function "private: virtual void __thiscall TensorImplTest_Caffe2Constructor_Test::TestBody(void)" (?TestBody@TensorImplTest_Caffe2Constructor_Test@@EAEXXZ)
+bin\TensorImpl_test.exe : fatal error LNK1120: 3 unresolved externals
+[1167/1219] Linking CXX executable bin\mobile_memory_cleanup.exe
+   Creating library lib\mobile_memory_cleanup.lib and object lib\mobile_memory_cleanup.exp
+[1168/1219] Linking CXX executable bin\cpu_generator_test.exe
+   Creating library lib\cpu_generator_test.lib and object lib\cpu_generator_test.exp
+[1170/1219] Linking CXX executable bin\cpu_profiling_allocator_test.exe
+   Creating library lib\cpu_profiling_allocator_test.lib and object lib\cpu_profiling_allocator_test.exp
+[1171/1219] Linking CXX executable bin\cpu_rng_test.exe
+   Creating library lib\cpu_rng_test.lib and object lib\cpu_rng_test.exp
+ninja: build stopped: subcommand failed.
+```
+
+
