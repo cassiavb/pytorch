@@ -29,8 +29,9 @@ set USE_KINETO=0
 set ATEN_CPU_CAPABILITY=default
 :: set ATEN_THREADING=OMP also gives AVX2 undeclared error
 
+:: To clean up the compilation
+python setup.py clean
+
 :: Remove --cmake if you dont want cmake to run again
 python setup.py install --cmake
 
-:: To clean up the compilation
-:: python setup.py clean

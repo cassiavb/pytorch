@@ -113,4 +113,40 @@ Full logs here:
 - AVX2 undeclared errors [log_AVX2error.md](log_AVX2error.md)  
 - link errors (when 'bypassing' AVX2 error) [log_LINKerror.md](log_LINKerror.md))  
 
+I noticed the following warnings in log_LINKerror before the link errors:
+```
+LINK : the 32-bit linker ran out of heap space and is going to restart linking with a 64-bit linker
+```
 
+I checked for updates to the VS BuildTools (I read somewhere that the issue was fixed in recent versions) and after updating it I dont get this anymore, but the same link errors are still there:  
+[log_LINKerror_update.md](log_LINKerror_update.md))  
+
+The issue I created in pytorch repo (https://github.com/pytorch/pytorch/issues/65615) was closed with the following comment:
+
+"As documented in https://pytorch.org/docs/stable/notes/windows.html , PyTorch does not support 32 bit runtimes anymore. Although we would a non-invasive patch that fixes
+the compilation problem."
+
+## Using a 32bits conda environment
+
+```
+(base) C:\Users\localaccount>set CONDA_FORCE_32BIT=1
+(base) C:\Users\localaccount>conda create -n integration32_8 python=3.8
+(base) C:\Users\localaccount>conda activate integration32_8
+
+(integration32_8) conda install ninja
+(integration32_8) conda install pyyaml
+(integration32_8) conda install -c anaconda git
+(integration32_8) conda install -c conda-forge libuv=1.39
+(integration32_8) pip install typing_extensions
+(integration32_8) pip install numpy mkl intel-openmp mkl_fft
+
+(integration32_8) C:\Users\localaccount\Documents\Integration\new_repo\pytorch>compile_Win32bits.bat
+**********************************************************************
+** Visual Studio 2019 Developer Command Prompt v16.11.4
+** Copyright (c) 2021 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x86'
+32-bit Windows Python runtime is not supported. Please switch to 64-bit Python.
+32-bit Windows Python runtime is not supported. Please switch to 64-bit Python.
+(integration32_8) C:\Users\localaccount\Documents\Integration\new_repo\pytorch>
+```
